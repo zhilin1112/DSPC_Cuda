@@ -1,5 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "cuda_runtime.h"
-#include "./cuda_kernel.cuh"
+#include "device_launch_parameters.h"
+#define SIZE 1024 * 1024
 
 __global__ void vectorAdditionKernel(double* A, double* B, double* C, int arraySize) {
     // Get thread ID.
@@ -11,8 +14,6 @@ __global__ void vectorAdditionKernel(double* A, double* B, double* C, int arrayS
         C[threadID] = A[threadID] + B[threadID];
     }
 }
-
-
 
 /**
  * Wrapper function for the CUDA kernel function.
@@ -44,4 +45,33 @@ void kernel(double* A, double* B, double* C, int arraySize) {
 
     // Copy result array c back to host memory.
     cudaMemcpy(C, d_C, arraySize * sizeof(double), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_C);
+}
+
+int main()
+{
+    double* a, * b, * c;
+    a = (double*)malloc(SIZE * sizeof(double));
+    b = (double*)malloc(SIZE * sizeof(double));
+    c = (double*)malloc(SIZE * sizeof(double));
+    for (int i = 0; i < SIZE; ++i)
+    {
+        a[i] = i;
+        b[i] = i;
+        c[i] = 0;
+    }
+    //CALL CUDA to do the work
+    kernel(a, b, c, SIZE);
+
+    for (int i = 0; i < 10; ++i) {
+        printf("c[%d]=%.0f\n", i, c[i]);
+    }
+    free(a);
+    free(b);
+    free(c);
+    return 0;
+
 }
